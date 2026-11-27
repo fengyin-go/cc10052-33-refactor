@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 T = TypeVar("T")
 
@@ -16,6 +16,8 @@ class PageResult(BaseModel, Generic[T]):
 
 
 class ActionResult(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     ok: bool
     message: str
     entry: dict[str, Any] | None = None

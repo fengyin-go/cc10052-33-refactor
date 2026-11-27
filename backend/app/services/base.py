@@ -14,6 +14,27 @@ class BaseModuleService:
     STATUS_ORDER: list[str] = []
     ACTION_RULES: dict[str, str] = {}
     NEGATIVE_ACTIONS: list[str] = []
+    ACTION_METHODS: dict[str, str] = {}
+
+    def execute_action(
+        self,
+        entry_id: int,
+        action: str,
+        payload: Any | None = None,
+    ) -> dict[str, Any]:
+        """路由层动作入口：优先走领域方法，未接线动作保持通用流转。"""
+        del payload
+        method_name = self.ACTION_METHODS.get(action)
+        method = getattr(self, method_name, None) if method_name else None
+        if callable(method):
+            result = method(entry_id)
+            if isinstance(result, dict):
+                result.setdefault("entry", self.get_entry(entry_id))
+                result.setdefault("ok", True)
+                result.setdefault("message", f"{self.ENTITY}已{action}")
+                return result
+        entry, message = self.run_action(entry_id, action)
+        return {"ok": entry is not None, "message": message, "entry": entry}
 
     def list_entries(
         self,
@@ -42,6 +63,13 @@ class BaseModuleService:
 
     def get_entry(self, entry_id: int) -> dict[str, Any] | None:
         return store.find(self.MODULE, entry_id)
+
+    def delete_entry(self, entry_id: int) -> bool:
+        row = store.find(self.MODULE, entry_id)
+        if row is None:
+            return False
+        store.rows(self.MODULE).remove(row)
+        return True
 
     def create_entry(self, values: dict[str, Any]) -> tuple[dict[str, Any] | None, list[str]]:
         missing = [

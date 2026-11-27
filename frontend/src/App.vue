@@ -13,7 +13,9 @@
         <span class="head-desc">支撑AB实验分组、指标口径计算、显著性检验、归因分析与报告分发的实验评估平台</span>
         <span class="head-user">当前值班：数据工程组</span>
       </header>
-      <RouterView />
+      <RouterView v-slot="{ Component, route }">
+        <component :is="Component" :key="route.fullPath" />
+      </RouterView>
     </main>
   </div>
 </template>
